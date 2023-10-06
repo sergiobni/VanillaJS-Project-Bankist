@@ -86,4 +86,23 @@ const displayMovements = function (movements) {
 displayMovements(account1.movements);
 
 /////////////////////////////////////////////////
+
+///Computing user names
+
+///Creating a new username for each user object, taking the list of objects from an array, and processing each at a time
+const createUserNames = function (accounts) {
+  accounts.forEach(function (acc) {
+    acc.username = acc.owner //saving and manipulating the new object property
+      .toLowerCase()
+      .split(' ')
+      ///looping over the array created, taking the first char of each word, and creating a new string, it will return a string with the user name and store it at the user object as username
+      .map(name => name.charAt(0))
+      .join('');
+  });
+};
+
+createUserNames(accounts);
+
+console.log(account1, account2, account3);
+
 /////////////////////////////////////////////////
