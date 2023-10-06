@@ -61,16 +61,29 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
+//////////////////////////
+
+///Display the movements on the user interface
+//the function will receive an array of movements
+const displayMovements = function (movements) {
+  ///Clean the previous data
+  containerMovements.innerHTML = '';
+  ///Creating new html
+  movements.forEach(function (mov, i) {
+    //check if the movement is deposit or withdrawal
+    const typeMov = mov > 0 ? 'deposit' : 'withdrawal';
+    //creating new html row with correspondent data
+    const html = `<div class="movements__row">
+    <div class="movements__type movements__type--${typeMov}">${
+      i + 1
+    } ${typeMov}</div>
+    <div class="movements__value">${mov}</div>
+  </div>`;
+    ///Insert the new html into the html document
+    containerMovements.insertAdjacentHTML('afterbegin', html);
+  });
+};
+displayMovements(account1.movements);
+
 /////////////////////////////////////////////////
-/////////////////////////////////////////////////
-// LECTURES
-
-const currencies = new Map([
-  ['USD', 'United States dollar'],
-  ['EUR', 'Euro'],
-  ['GBP', 'Pound sterling'],
-]);
-
-const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
-
 /////////////////////////////////////////////////
