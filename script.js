@@ -203,3 +203,26 @@ btnTransfer.addEventListener('click', function (e) {
   }
   updateUI(currentAccount);
 });
+
+///Delete account
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+  if (
+    inputCloseUsername.value === currentAccount.username &&
+    Number(inputClosePin.value) === currentAccount.pin
+  ) {
+    //Calculate index to delete
+    const index = accounts.findIndex(
+      acc => acc.username === currentAccount.username
+    );
+    //Delete the account at the index previusly determined
+    accounts.splice(index, 1); //Selected index to start removing and the number of removed elements
+
+    //Clean html fields
+    inputCloseUsername.value = inputClosePin.value = '';
+    labelWelcome.textContent = 'Login to get started';
+
+    //Hide UI
+    containerApp.style.opacity = 0;
+  }
+});
