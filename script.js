@@ -226,3 +226,16 @@ btnClose.addEventListener('click', function (e) {
     containerApp.style.opacity = 0;
   }
 });
+
+//Request loans
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  const amount = Number(inputLoanAmount.value);
+  if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    //Add loan to balance
+    currentAccount.movements.push(amount);
+
+    updateUI(currentAccount);
+  }
+});
