@@ -86,11 +86,11 @@ const displayMovements = function (movements) {
 };
 
 /// Display Balance
-const calcDisplayBalance = function (movements) {
-  //Calculating balance
-  const balance = movements.reduce((acc, mov) => acc + mov, 0);
+const calcDisplayBalance = function (acc) {
+  //Setting an updated balance property in the account object
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
   //Displaying balance
-  labelBalance.textContent = `${balance} €`;
+  labelBalance.textContent = `${acc.balance} €`;
 };
 
 ///Display Summary
@@ -162,13 +162,44 @@ btnLogin.addEventListener('click', function (event) {
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur(); //Focus out of the textbox
 
-    //Display movements
-    displayMovements(currentAccount.movements);
-
-    //Display balance
-    calcDisplayBalance(currentAccount.movements);
-
-    //Display summary
-    calcDisplaySummary(currentAccount);
+    updateUI(currentAccount);
   }
+});
+
+const updateUI = function (acc) {
+  //Display movements
+  displayMovements(currentAccount.movements);
+
+  //Display balance
+  calcDisplayBalance(currentAccount);
+
+  //Display summary
+  calcDisplaySummary(currentAccount);
+};
+
+///Transfers
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const receiverAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value
+  );
+
+  //Clean html input fields
+  inputTransferAmount.value = inputTransferTo.value = '';
+
+  //Check if sender accounts has enough funds and it sends positive money
+  if (
+    amount > 0 && //(&& short circuiting, if true continue)
+    receiverAcc && //Check if the receiver account exists
+    currentAccount.balance >= amount && // Check if the sender amount holds enough funds
+    receiverAcc.username !== currentAccount.username
+  ) {
+    //Subtract the amount from the sender balance
+    currentAccount.movements.push(-amount);
+    //Add amount to the reciever balance
+    receiverAcc.movements.push(amount);
+  }
+  updateUI(currentAccount);
 });
