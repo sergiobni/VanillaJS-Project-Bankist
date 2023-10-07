@@ -84,7 +84,6 @@ const displayMovements = function (movements) {
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
-displayMovements(account1.movements);
 
 /// Display Balance
 const calcDisplayBalance = function (movements) {
@@ -93,24 +92,23 @@ const calcDisplayBalance = function (movements) {
   //Displaying balance
   labelBalance.textContent = `${balance} €`;
 };
-calcDisplayBalance(account1.movements);
 
 ///Display Summary
-const calcDisplaySummary = function (movements) {
-  const incomes = movements
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
     .filter(mov => mov > 0)
-    .reduce((acc, cur) => acc + cur);
+    .reduce((acc, cur) => acc + cur, 0);
   labelSumIn.textContent = `${incomes}€`;
 
-  const outcomes = movements
+  const outcomes = acc.movements
     .filter(mov => mov < 0)
-    .reduce((acc, cur) => acc + cur);
+    .reduce((acc, cur) => acc + cur, 0);
   labelSumOut.textContent = `${Math.abs(outcomes)}€`;
 
-  //Established a policy of 1,2% interest, computing the interest accumulated for all deposits, bank only pays interest if the interest is at least 1€
-  const interest = movements
+  //Interest rates came from user object property, computing the interest accumulated for all deposits, bank only pays interest if the interest is at least 1€
+  const interest = acc.movements
     .filter(mov => mov > 0) //Getting the value of every deposit
-    .map(deposit => (deposit * 1.2) / 100) //Save calculated interest for every deposit
+    .map(deposit => (deposit * acc.interestRate) / 100) //Save calculated interest for every deposit
     .filter((int, i, arr) => {
       //Only paying interest if amount at least 1€
       return int >= 1;
@@ -119,7 +117,6 @@ const calcDisplaySummary = function (movements) {
   labelSumInterest.textContent = `${interest}€`;
 };
 
-calcDisplaySummary(account1.movements);
 /////////////////////////////////////////////////
 
 ///Computing user names
@@ -139,3 +136,39 @@ const createUserNames = function (accounts) {
 createUserNames(accounts);
 
 console.log(account1, account2, account3);
+
+/////////////////////////////////////////////////
+
+///// Event handler
+
+///Login
+let currentAccount;
+btnLogin.addEventListener('click', function (event) {
+  event.preventDefault(); //Prevent the reload of the page, triggered by the html form submit
+  currentAccount = accounts.find(
+    acc => acc.username === inputLoginUsername.value
+  );
+  console.log(currentAccount);
+
+  //If the introduced account exists and checks with the correct pin number (with optional chaining)
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    //Display UI and message
+    labelWelcome.textContent = `Welcome back ${
+      currentAccount.owner.split(' ')[0] //Getting the first name of the owner
+    }`;
+    containerApp.style.opacity = 100; //Hide the default dashboard before the logged user data loads
+
+    //Clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginPin.blur(); //Focus out of the textbox
+
+    //Display movements
+    displayMovements(currentAccount.movements);
+
+    //Display balance
+    calcDisplayBalance(currentAccount.movements);
+
+    //Display summary
+    calcDisplaySummary(currentAccount);
+  }
+});
