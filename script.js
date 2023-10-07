@@ -63,28 +63,63 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 //////////////////////////
 
-///Display the movements on the user interface
-//the function will receive an array of movements
+/////Display the movements on the user interface
+
+//The function will receive an array of movements
 const displayMovements = function (movements) {
-  ///Clean the previous data
+  //Clean the previous data
   containerMovements.innerHTML = '';
-  ///Creating new html
+  //Creating new html
   movements.forEach(function (mov, i) {
-    //check if the movement is deposit or withdrawal
+    //Check if the movement is deposit or withdrawal
     const typeMov = mov > 0 ? 'deposit' : 'withdrawal';
-    //creating new html row with correspondent data
+    //Creating new html row with correspondent data
     const html = `<div class="movements__row">
     <div class="movements__type movements__type--${typeMov}">${
       i + 1
     } ${typeMov}</div>
     <div class="movements__value">${mov}</div>
   </div>`;
-    ///Insert the new html into the html document
+    //Insert the new html into the html document
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
 displayMovements(account1.movements);
 
+/// Display Balance
+const calcDisplayBalance = function (movements) {
+  //Calculating balance
+  const balance = movements.reduce((acc, mov) => acc + mov, 0);
+  //Displaying balance
+  labelBalance.textContent = `${balance} €`;
+};
+calcDisplayBalance(account1.movements);
+
+///Display Summary
+const calcDisplaySummary = function (movements) {
+  const incomes = movements
+    .filter(mov => mov > 0)
+    .reduce((acc, cur) => acc + cur);
+  labelSumIn.textContent = `${incomes}€`;
+
+  const outcomes = movements
+    .filter(mov => mov < 0)
+    .reduce((acc, cur) => acc + cur);
+  labelSumOut.textContent = `${Math.abs(outcomes)}€`;
+
+  //Established a policy of 1,2% interest, computing the interest accumulated for all deposits, bank only pays interest if the interest is at least 1€
+  const interest = movements
+    .filter(mov => mov > 0) //Getting the value of every deposit
+    .map(deposit => (deposit * 1.2) / 100) //Save calculated interest for every deposit
+    .filter((int, i, arr) => {
+      //Only paying interest if amount at least 1€
+      return int >= 1;
+    })
+    .reduce((acc, int) => acc + int, 0); //Sum all interest generated
+  labelSumInterest.textContent = `${interest}€`;
+};
+
+calcDisplaySummary(account1.movements);
 /////////////////////////////////////////////////
 
 ///Computing user names
@@ -95,7 +130,7 @@ const createUserNames = function (accounts) {
     acc.username = acc.owner //saving and manipulating the new object property
       .toLowerCase()
       .split(' ')
-      ///looping over the array created, taking the first char of each word, and creating a new string, it will return a string with the user name and store it at the user object as username
+      //Looping over the array created, taking the first char of each word, and creating a new string, it will return a string with the user name and store it at the user object as username
       .map(name => name.charAt(0))
       .join('');
   });
@@ -104,5 +139,3 @@ const createUserNames = function (accounts) {
 createUserNames(accounts);
 
 console.log(account1, account2, account3);
-
-/////////////////////////////////////////////////
