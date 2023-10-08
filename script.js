@@ -65,12 +65,14 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 /////Display the movements on the user interface
 
-//The function will receive an array of movements
-const displayMovements = function (movements) {
+//The function will receive an array of movements, and state of sort
+const displayMovements = function (movements, sort = false) {
   //Clean the previous data
   containerMovements.innerHTML = '';
+  //Sorting movements
+  const sortedMovs = sort ? movements.slice().sort((a, b) => a - b) : movements; //If sort is true, creating a shallow copy of the movements arrays, so the original will not be mutated by the sort method
   //Creating new html
-  movements.forEach(function (mov, i) {
+  sortedMovs.forEach(function (mov, i) {
     //Check if the movement is deposit or withdrawal
     const typeMov = mov > 0 ? 'deposit' : 'withdrawal';
     //Creating new html row with correspondent data
@@ -227,7 +229,7 @@ btnClose.addEventListener('click', function (e) {
   }
 });
 
-//Request loans
+///Request loans
 btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
 
@@ -238,4 +240,12 @@ btnLoan.addEventListener('click', function (e) {
 
     updateUI(currentAccount);
   }
+});
+
+///Sorting movements
+let isSorted = false; //For stablishing a flip trigger condition
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+  displayMovements(currentAccount.movements, !isSorted);
+  isSorted = !isSorted;
 });
