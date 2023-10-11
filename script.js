@@ -77,9 +77,9 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 ///// FUNCTIONS
 
-///Formating dates
-const formatMovementDate = function (date) {
-  //Calculating the days passed, geting it in unix time and converting it to days
+///Formatting dates
+const formatMovementDate = function (date, locale) {
+  //Calculating the days passed, getting it in unix time and converting it to days
   const calcDaysPassed = (date1, date2) =>
     Math.round(Math.abs(date2 - date1) / (1000 * 60 * 60 * 24));
   //Calling the calcDaysPassed, with current date and date passed from object loop
@@ -89,13 +89,17 @@ const formatMovementDate = function (date) {
   if (daysPassed === 0) return 'Today';
   if (daysPassed === 1) return 'Yesterday';
   if (daysPassed <= 7) return `${daysPassed} days ago`;
-  else {
-    //Get movements dates and setting date of each movement
-    const day = `${date.getDate()}`.padStart(2, 0);
-    const month = `${date.getMonth() + 1}`.padStart(2, 0);
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
+
+  //If not in the range of a nice string, return the date formatted accordingly
+  return new Intl.DateTimeFormat(locale).format(date);
+};
+
+//Internationalizing numbers
+const formatCur = function (value, locale, currency) {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency,
+  }).format(value);
 };
 
 //////////////////////////
@@ -115,9 +119,13 @@ const displayMovements = function (acc, sort = false) {
   sortedMovs.forEach(function (mov, i) {
     //Check if the movement is deposit or withdrawal
     const typeMov = mov > 0 ? 'deposit' : 'withdrawal';
-    //Getting date for each movement from the object
+
+    //Getting date for each movement from the object, and the type of locale from object
     const date = new Date(acc.movementsDates[i]);
-    const displayDate = formatMovementDate(date);
+    const displayDate = formatMovementDate(date, acc.locale);
+
+    //Formatting displayed movements
+    const formattedMov = formatCur(mov, acc.locale, acc.currency);
 
     //Creating new html row with correspondent data
     const html = `<div class="movements__row">
@@ -125,7 +133,7 @@ const displayMovements = function (acc, sort = false) {
       i + 1
     } ${typeMov}</div>
     <div class="movements__date">${displayDate}</div>
-    <div class="movements__value">${mov.toFixed(2)}</div>
+    <div class="movements__value">${formattedMov}</div>
   </div>`;
     //Insert the new html into the html document
     containerMovements.insertAdjacentHTML('afterbegin', html);
@@ -136,8 +144,12 @@ const displayMovements = function (acc, sort = false) {
 const calcDisplayBalance = function (acc) {
   //Setting an updated balance property in the account object
   acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+
+  //Formatting displayed movements
+  const formattedMov = formatCur(acc.balance, acc.locale, acc.currency);
+
   //Displaying balance
-  labelBalance.textContent = `${acc.balance.toFixed(2)} €`;
+  labelBalance.textContent = `${formattedMov} €`;
 };
 
 ///Display Summary
@@ -145,12 +157,16 @@ const calcDisplaySummary = function (acc) {
   const incomes = acc.movements
     .filter(mov => mov > 0)
     .reduce((acc, cur) => acc + cur, 0);
-  labelSumIn.textContent = `${incomes.toFixed(2)}€`;
+  labelSumIn.textContent = formatCur(incomes, acc.locale, acc.currency);
 
   const outcomes = acc.movements
     .filter(mov => mov < 0)
     .reduce((acc, cur) => acc + cur, 0);
-  labelSumOut.textContent = `${Math.abs(outcomes).toFixed(2)}€`;
+  labelSumOut.textContent = formatCur(
+    Math.abs(outcomes),
+    acc.locale,
+    acc.currency
+  );
 
   //Interest rates came from user object property, computing the interest accumulated for all deposits, bank only pays interest if the interest is at least 1€
   const interest = acc.movements
@@ -161,7 +177,7 @@ const calcDisplaySummary = function (acc) {
       return int >= 1;
     })
     .reduce((acc, int) => acc + int, 0); //Sum all interest generated
-  labelSumInterest.textContent = `${interest.toFixed(2)}€`;
+  labelSumInterest.textContent = formatCur(interest, acc.locale, acc.currency);
 };
 
 /////////////////////////////////////////////////
@@ -206,14 +222,21 @@ btnLogin.addEventListener('click', function (event) {
     containerApp.style.opacity = 100; //Hide the default dashboard before the logged user data loads
 
     ///Display Current time
-    const now = new Date();
 
-    const day = `${now.getDate()}`.padStart(2, 0);
-    const month = `${now.getMonth() + 1}`.padStart(2, 0);
-    const year = now.getFullYear();
-    const hour = `${now.getHours() + 1}`.padStart(2, 0);
-    const min = `${now.getMinutes() + 1}`.padStart(2, 0);
-    labelDate.textContent = `${day}/${month}/${year}, ${hour}:${min}`;
+    const now = new Date();
+    //Creating an object for getting the formatted options we want from the Intl
+    const options = {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+    };
+
+    labelDate.textContent = new Intl.DateTimeFormat(
+      currentAccount.locale,
+      options
+    ).format(now);
 
     //Clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
