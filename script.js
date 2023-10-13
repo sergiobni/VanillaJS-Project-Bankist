@@ -94,12 +94,49 @@ const formatMovementDate = function (date, locale) {
   return new Intl.DateTimeFormat(locale).format(date);
 };
 
-//Internationalizing numbers
+///Internationalizing numbers
 const formatCur = function (value, locale, currency) {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currency,
   }).format(value);
+};
+
+///Update UI with current account credentials
+const updateUI = function (acc) {
+  //Display movements
+  displayMovements(acc);
+
+  //Display balance
+  calcDisplayBalance(acc);
+
+  //Display summary
+  calcDisplaySummary(acc);
+};
+
+///Setting a timer for autologout
+const startLogOutTimer = function () {
+  //Set time to 5 minutes
+  let time = 300;
+  const tick = function () {
+    const min = String(Math.trunc(time / 60)).padStart(2, 0);
+    const sec = String(time % 60).padStart(2, 0);
+    //In each call, print the remaining time to UI
+    labelTimer.textContent = `${min}:${sec}`;
+    //When 0 seconds, stop the timer and logout
+    if (time === 0) {
+      clearInterval(timer);
+      containerApp.style.opacity = 0;
+      labelWelcome.textContent = 'Login to get started';
+    }
+    //Decrease 1s
+    time--;
+  };
+
+  //Call the timer every second
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer; //Returning the timer so we can clear it out if user switches account
 };
 
 //////////////////////////
@@ -204,8 +241,8 @@ console.log(account1, account2);
 
 ///// Event handler
 
+let currentAccount, timer; //Variables that need to be on the parent scope
 ///Login
-let currentAccount;
 btnLogin.addEventListener('click', function (event) {
   event.preventDefault(); //Prevent the reload of the page, triggered by the html form submit
   currentAccount = accounts.find(
@@ -242,20 +279,13 @@ btnLogin.addEventListener('click', function (event) {
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur(); //Focus out of the textbox
 
+    //Starting the timer for logout
+    if (timer) clearInterval(timer); //If there was a timer already, clear it
+    timer = startLogOutTimer();
+
     updateUI(currentAccount);
   }
 });
-
-const updateUI = function (acc) {
-  //Display movements
-  displayMovements(currentAccount);
-
-  //Display balance
-  calcDisplayBalance(currentAccount);
-
-  //Display summary
-  calcDisplaySummary(currentAccount);
-};
 
 ///Transfers
 
@@ -286,6 +316,9 @@ btnTransfer.addEventListener('click', function (e) {
     receiverAcc.movementsDates.push(new Date().toISOString());
   }
   updateUI(currentAccount);
+  //Reset timer
+  clearInterval(timer);
+  timer = startLogOutTimer();
 });
 
 ///Delete account
@@ -317,13 +350,23 @@ btnLoan.addEventListener('click', function (e) {
 
   const amount = Math.floor(inputLoanAmount.value); //Rounding the value with floor method
   if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
-    //Add loan to balance
-    currentAccount.movements.push(amount);
+    //Creating a little delay for approving the loan
+    setTimeout(() => {
+      //Add loan to balance
+      currentAccount.movements.push(amount);
 
-    //Add transfer date
-    currentAccount.movementsDates.push(new Date().toISOString());
+      //Add transfer date
+      currentAccount.movementsDates.push(new Date().toISOString());
 
-    updateUI(currentAccount);
+      //Clean html input field
+      inputLoanAmount.value = '';
+
+      //Reset timer
+      clearInterval(timer);
+      timer = startLogOutTimer();
+
+      updateUI(currentAccount);
+    }, 1500);
   }
 });
 
